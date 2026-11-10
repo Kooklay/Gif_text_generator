@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>PRO STUDIO (Clean & Dynamic)</title>
+    <style>
+        :root { --primary: #00f0ff; --bg: #060606; }
+        body { background-color: var(--bg); color: #eee; font-family: 'Inter', 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        .studio { display: flex; gap: 30px; background: #0c0c0c; padding: 25px; border-radius: 16px; border: 1px solid #222; box-shadow: 0 30px 100px rgba(0, 240, 255, 0.05); }
+        
+        .panel { display: flex; flex-direction: column; gap: 15px; width: 320px; }
+        .panel h1 { font-size: 18px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 5px 0; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.2); }
+        
+        .group { display: flex; flex-direction: column; gap: 6px; }
+        .group label { font-size: 10px; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 1.5px; }
+        select, input[type="text"], textarea { width: 100%; padding: 12px; background: #151515; border: 1px solid #333; color: #fff; border-radius: 8px; font-size: 13px; outline: none; transition: border 0.3s; box-sizing: border-box; font-family: inherit;}
+        select:focus, input[type="text"]:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(0, 240, 255, 0.1); }
+        textarea { height: 80px; resize: none; font-family: monospace; font-size: 12px; line-height: 1.4; }
+        
+        .slider-group { display: flex; align-items: center; gap: 10px; }
+        input[type="range"] { flex-grow: 1; accent-color: var(--primary); cursor: pointer; }
+        .speed-value { font-family: monospace; font-size: 12px; color: var(--primary); width: 40px; text-align: right; }
+
+        .btn { padding: 15px; font-size: 13px; cursor: pointer; background: var(--primary); border: none; border-radius: 8px; color: #000; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
+        .btn:hover { background: #fff; box-shadow: 0 0 30px rgba(255,255,255,0.4); transform: translateY(-2px); }
+        .btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        .file-wrapper { position: relative; overflow: hidden; }
+        .file-wrapper input[type=file] { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%;}
+        .file-btn { padding: 12px; background: #151515; border: 1px dashed #444; color: #888; text-align: center; border-radius: 8px; font-size: 12px; cursor: pointer; transition: 0.2s; }
+        .file-wrapper:hover .file-btn { border-color: var(--primary); color: var(--primary); }
+
+        .preview { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; border: 1px solid #222; border-radius: 12px; padding: 20px; flex-grow: 1; }
+        canvas { border: 1px solid #222; background: #000; box-shadow: inset 0 0 50px rgba(0,0,0,0.9); max-width: 100%; }
+        .panel { max-height: 88vh; overflow-y: auto; padding-right: 8px; gap: 12px; }
+        .panel::-webkit-scrollbar { width: 5px; } .panel::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        .chk { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .chk label { font-size: 11px; font-weight: 600; color: #aaa; display: flex; gap: 6px; align-items: center; cursor: pointer; }
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        input[type=color] { width: 100%; height: 32px; border: 1px solid #333; background: #151515; border-radius: 6px; padding: 2px; cursor: pointer; }
+        .btn2 { padding: 10px; font-size: 11px; cursor: pointer; background: #151515; border: 1px solid #333; border-radius: 8px; color: #ccc; font-weight: 800; text-transform: uppercase; }
+        .btn2:hover { border-color: var(--primary); color: var(--primary); }
+        .status { font-size: 12px; color: var(--primary); margin-top: 15px; height: 16px; font-weight: 700; letter-spacing: 1px;}
+    </style>
+</head>
+<body>
+
+    <div class="studio">
+        <div class="panel">
+            <h1>PRO STUDIO</h1>
+            
+            <div class="group">
+                <label>Выбор шаблона</label>
+                <select id="templateSelect" onchange="updateTemplatePreview()">
+                    <option value="tile_cyan">A. Cyan Tile (из видео)</option>
+                    <option value="tile_fire">B. Fire Tile (из видео)</option>
+                    <option value="aurora">C. Aurora Glow (новый)</option>
+                    <option value="terminal">D. Terminal Type (новый)</option>
+                    <option value="slice">E. Slice Reveal (новый)</option>
+                    <option value="rgb_glitch">1. RGB Glitch (Cyber)</option>
+                    <option value="cinematic">2. Cinematic Epic (Movie)</option>
+                    <option value="neon">3. Neon Synth (Retro)</option>
+                    <option value="minimal">4. Minimal Type (Luxury)</option>
+                    <option value="action">5. Action Trailer (Impact)</option>
+                </select>
+            </div>
+
+            <div class="group">
+                <label>Текст (каждое слово с новой строки)</label>
+                <textarea id="textInput" oninput="updateTemplatePreview()">РАЗДЕЛЯЕМ
+НЕ ХОЧУ ВОРКАТЬ
+И РАБОЧЕЕ
+НЕ ХОЧУ СИДЕТЬ В ВОЙСАХ</textarea>
+            </div>
+
+            <div class="group">
+                <label>Акцентное слово (Цвет/Эффект)</label>
+                <input type="text" id="accentWord" value="ХОЧУ" oninput="updateTemplatePreview()">
+            </div>
+
+            <div class="group">
+                <label>Скорость анимации</label>
+                <div class="slider-group">
+                    <input type="range" id="speedSlider" min="10" max="100" value="60" oninput="updateSpeedLabel()">
+                    <div class="speed-value" id="speedValue">60%</div>
+                </div>
+            </div>
+
+            <div class="group">
+                <label>Размер GIF</label>
+                <select id="sizeSel" class="ctl">
+                    <option value="720x140">720×140 (плитка)</option>
+                    <option value="720x200">720×200</option>
+                    <option value="480x270">480×270 (16:9)</option>
+                    <option value="400x400">400×400 (квадрат)</option>
+                    <option value="360x640">360×640 (вертикаль)</option>
+                </select>
+            </div>
+            <div class="group">
+                <label>Шрифт</label>
+                <select id="fontSel" class="ctl">
+                    <option value='"Arial Black", sans-serif'>Arial Black</option>
+                    <option value='Impact, sans-serif'>Impact</option>
+                    <option value='"Segoe UI", sans-serif'>Segoe UI</option>
+                    <option value='Verdana, sans-serif'>Verdana</option>
+                    <option value='"Times New Roman", serif'>Times New Roman</option>
+                    <option value='"Courier New", monospace'>Courier New</option>
+                </select>
+            </div>
+            <div class="group">
+                <label>Размер текста <span id="sizeVal" style="color:var(--primary)">100%</span></label>
+                <input type="range" id="sizeMul" class="ctl" min="50" max="200" value="100">
+            </div>
+            <div class="row2">
+                <div class="group"><label>Межбуквенный</label><input type="range" id="spacing" class="ctl" min="0" max="20" value="3"></div>
+                <div class="group"><label>Сдвиг по Y</label><input type="range" id="offY" class="ctl" min="-60" max="60" value="0"></div>
+            </div>
+            <div class="group">
+                <label>Зерно (плёнка)</label>
+                <input type="range" id="grain" class="ctl" min="0" max="100" value="0">
+            </div>
+            <div class="row2">
+                <div class="group"><label>Цвет текста</label><input type="color" id="colText" class="ctl" value="#ffffff"></div>
+                <div class="group"><label>Цвет акцента</label><input type="color" id="colAcc" class="ctl" value="#ff4a14"></div>
+            </div>
+            <div class="chk">
+                <label><input type="checkbox" id="custom" class="ctl"> Свои цвета</label>
+                <label><input type="checkbox" id="scr" class="ctl" checked> Scramble-буквы</label>
+                <label><input type="checkbox" id="glow" class="ctl" checked> Свечение</label>
+                <label><input type="checkbox" id="vignette" class="ctl"> Виньетка</label>
+                <label><input type="checkbox" id="loop" class="ctl" checked> Зациклить GIF</label>
+            </div>
+            <div class="row2">
+                <button class="btn2" onclick="togglePause()" id="pauseBtn">⏸ Пауза</button>
+                <button class="btn2" onclick="savePng()">PNG кадра</button>
+            </div>
+
+            <div class="group">
+                <label>Фон (Опционально)</label>
+                <div class="file-wrapper">
+                    <input type="file" id="bgUpload" accept="image/*" onchange="loadBackground(event)">
+                    <div class="file-btn" id="fileLabel">+ Загрузить текстуру</div>
+                </div>
+            </div>
+
+            <button class="btn" id="downloadBtn" onclick="startGeneration()">Рендерить в GIF</button>
+            <div class="status" id="statusText"></div>
+        </div>
+
+        <div class="preview">
+            <canvas id="gifCanvas" width="720" height="140"></canvas>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GIFEncoder, quantize, applyPalette } from 'https://unpkg.com/gifenc';
+        window.GIFEncoder = GIFEncoder;
+        window.quantize = quantize;
+        window.applyPalette = applyPalette;
+    </script>
+
+    <script>
+        const canvas = document.getElementById('gifCanvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width;
+        let height = canvas.height;
+
+        let backgroundImage = null;
+        let textsArray = ["РАЗДЕЛЯЕМ"];
+        let accentWord = "ХОЧУ";
+        let currentTemplate = "tile_cyan";
+
+        const baseFramesPerText = 100; 
+        let framesPerText = baseFramesPerText; 
+        let totalFrames = textsArray.length * framesPerText; 
+        let frameDelay = 33; 
+
+        let previewFrame = 0;
+        let isGenerating = false;
+
+        const easeOutExpo = (x) => x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
+        const easeInExpo = (x) => x === 0 ? 0 : Math.pow(2, 10 * x - 10);
+        const easeOutBack = (x) => { const c1 = 1.70158; const c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+
+        function updateSpeedLabel() {
+            document.getElementById('speedValue').innerText = document.getElementById('speedSlider').value + '%';
+            updateTemplatePreview();
+        }
+
+        function loadBackground(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('fileLabel').innerText = "Файл загружен ✓";
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() { backgroundImage = img; previewFrame = 0; };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateTemplatePreview() {
+            readS();
+            currentTemplate = document.getElementById('templateSelect').value;
+            accentWord = document.getElementById('accentWord').value.trim();
+            let rawText = document.getElementById('textInput').value;
+            textsArray = rawText.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+            if (textsArray.length === 0) textsArray = ["ПУСТО"];
+
+            let speedPercent = parseInt(document.getElementById('speedSlider').value);
+            let speedMultiplier = speedPercent / 50; 
+            
+            framesPerText = Math.floor(baseFramesPerText / speedMultiplier);
+            frameDelay = Math.floor(33 / speedMultiplier);
+            
+            if (framesPerText < 20) framesPerText = 20;
+            if (frameDelay < 10) frameDelay = 10;
+
+            totalFrames = textsArray.length * framesPerText;
+            previewFrame = 0;
+        }
+
+        function isAccent(word) {
+            return word.toUpperCase().includes(accentWord.toUpperCase()) && accentWord.length > 0;
+        }
+        function isAccentWord(w) {
+            const list = accentWord.toUpperCase().split(/[,\s]+/).filter(Boolean);
+            return list.includes(w.toUpperCase());
+        }
+
+        // ================= ОБЩИЕ НАСТРОЙКИ =================
+        let S = { font: '"Arial Black", sans-serif', sizeMul: 1, spacing: 3, offY: 0, grain: 0, vignette: false, glow: true, scramble: true, custom: false, text: '#ffffff', accent: '#ff4a14', loop: true };
+        function readS() {
+            const g = id => document.getElementById(id);
+            S.font = g('fontSel').value; S.sizeMul = g('sizeMul').value / 100; S.spacing = +g('spacing').value; S.offY = +g('offY').value;
+            S.grain = +g('grain').value; S.vignette = g('vignette').checked; S.glow = g('glow').checked; S.scramble = g('scr').checked;
+            S.custom = g('custom').checked; S.text = g('colText').value; S.accent = g('colAcc').value; S.loop = g('loop').checked;
+            g('sizeVal').innerText = g('sizeMul').value + '%';
+            const [w, h] = g('sizeSel').value.split('x').map(Number);
+            if (w !== width || h !== height) { canvas.width = w; canvas.height = h; width = w; height = h; canvas.style.width = w + 'px'; canvas.style.height = h + 'px'; }
+        }
+        const cols = (dt, da) => S.custom ? { t: S.text, a: S.accent } : { t: dt, a: da };
+        const clamp01 = x => Math.max(0, Math.min(1, x));
+        function solid(c) { ctx.save(); ctx.globalAlpha = backgroundImage ? 0.6 : 1; ctx.fillStyle = c; ctx.fillRect(0, 0, width, height); ctx.restore(); }
+        function isAccentWord(w) {
+            const list = accentWord.toUpperCase().split(/[,\s]+/).filter(Boolean);
+            return list.includes(w.toUpperCase());
+        }
+        const SCR = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЭЮЯ0123456789#%&';
+        function roundRectPath(x, y, w, h, r) {
+            ctx.beginPath(); ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+        }
+
+        // Универсальная отрисовка строки: слова, акцент, scramble, автоподгон по ширине
+        function drawLine(text, o) {
+            const font = o.font || S.font;
+            ctx.save();
+            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            const words = text.split(' ');
+            const n = text.replace(/ /g, '').length;
+            let size = o.size * S.sizeMul, sp, gap, items, total;
+            const layout = () => {
+                ctx.font = `900 ${size}px ${font}`;
+                sp = S.spacing * size / 30; gap = size * 0.35; items = []; total = 0; let ci = 0;
+                words.forEach((w, wi) => {
+                    for (const ch of w) { const cw = ctx.measureText(ch).width; items.push({ ch, cw, acc: isAccentWord(w), ci }); total += cw + sp; ci++; }
+                    if (wi < words.length - 1) { items.push({ gap: true }); total += gap; }
+                });
+            };
+            layout();
+            const maxW = width * 0.92;
+            if (o.left === undefined && total > maxW) { size *= maxW / total; layout(); }
+            let x = o.left !== undefined ? o.left : (width - total) / 2;
+            const y = height / 2 + S.offY;
+            const reveal = o.reveal === undefined ? 1 : o.reveal;
+            for (const it of items) {
+                if (it.gap) { x += gap; continue; }
+                let c = it.ch, a = o.alpha === undefined ? 1 : o.alpha;
+                if (!(it.ci < reveal * n)) {
+                    if (!S.scramble) { x += it.cw + sp; continue; }
+                    c = SCR[Math.floor(Math.random() * SCR.length)]; a *= 0.45;
+                }
+                ctx.globalAlpha = a;
+                ctx.fillStyle = it.acc ? o.da : o.dt;
+                ctx.shadowColor = o.shadowColor || (it.acc ? o.da : 'rgba(0,0,0,.8)');
+                ctx.shadowBlur = (o.shadow || 0) * (S.glow ? 1 : 0);
+                ctx.fillText(c, x, y);
+                x += it.cw + sp;
+            }
+            if (o.cursor) { ctx.globalAlpha = 1; ctx.shadowColor = o.dt; ctx.shadowBlur = S.glow ? 10 : 0; ctx.fillStyle = o.dt; ctx.fillRect(x + 2, y - size * 0.4, size * 0.5, size * 0.8); }
+            ctx.restore();
+        }
+
+        // ---------- A / B: плитки из видео ----------
+        function drawTile(cyan, progress, text, fi) {
+            const inP = clamp01(progress / 0.25), outP = clamp01((progress - 0.8) / 0.2);
+            const c = cols('#ffffff', cyan ? '#0a3d52' : '#ff4a14');
+            ctx.save();
+            roundRectPath(8, 8, width - 16, height - 16, Math.min(18, height / 4)); ctx.clip();
+            if (cyan) {
+                ctx.fillStyle = '#3fd2f7'; ctx.fillRect(0, 0, width, height);
+                let r = inP < 1 ? (1 - easeOutExpo(inP)) * width * 0.6 : outP * width * 0.6;
+                if (r > 1) {
+                    const g = ctx.createRadialGradient(width/2, height/2, r * 0.85, width/2, height/2, r);
+                    g.addColorStop(0, '#15151a'); g.addColorStop(1, 'rgba(21,21,26,0)');
+                    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(width/2, height/2, r, 0, 7); ctx.fill();
+                }
+                drawLine(text, { size: 26, reveal: Math.min(1, inP * 1.3), alpha: 1 - outP * 0.8, dt: c.t, da: c.a });
+            } else {
+                solid('#0a0504');
+                const glow = ctx.createRadialGradient(width/2, height/2, 10, width/2, height/2, width * 0.5);
+                glow.addColorStop(0, 'rgba(255,70,20,0.28)'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = glow; ctx.fillRect(0, 0, width, height);
+                if (progress < 0.28) {
+                    const p = progress / 0.28, fade = 1 - p;
+                    for (let i = 0; i < 6; i++) {
+                        ctx.strokeStyle = `rgba(255,${110 + i * 20},60,${fade * 0.55})`; ctx.lineWidth = 14 - i;
+                        ctx.beginPath(); ctx.arc(width/2, height/2, 20 + i * 38 + p * 60, 0, 7); ctx.stroke();
+                    }
+                    ctx.strokeStyle = `rgba(255,255,255,${fade * 0.8})`; ctx.lineWidth = 1;
+                    for (let i = 0; i < 2; i++) {
+                        const a = Math.random() * Math.PI;
+                        ctx.beginPath(); ctx.moveTo(width/2 - Math.cos(a) * 300, height/2 - Math.sin(a) * 300);
+                        ctx.lineTo(width/2 + Math.cos(a) * 300, height/2 + Math.sin(a) * 300); ctx.stroke();
+                    }
+                }
+                ctx.fillStyle = 'rgba(255,120,40,0.7)';
+                for (let i = 0; i < 14; i++) {
+                    const sx = (i * 97 + fi * (1 + i % 3)) % width, sy = (i * 53 + fi * 0.6 * (1 + i % 2)) % height;
+                    ctx.fillRect(sx, height - sy, 2, 2);
+                }
+                ctx.translate(outP > 0 ? (Math.random() - 0.5) * 40 * outP : 0, 0);
+                drawLine(text, { size: 34, reveal: Math.min(1, inP * 1.2), alpha: 1 - outP, dt: c.t, da: c.a, shadow: 12 });
+            }
+            ctx.restore();
+        }
+
+        // ---------- C: Aurora Glow ----------
+        function drawAurora(progress, text, fi) {
+            const inP = clamp01(progress / 0.25), outP = clamp01((progress - 0.8) / 0.2);
+            solid('#07060f');
+            const t = fi * 0.04, R = Math.max(width, height) * 0.55;
+            ctx.save(); ctx.globalCompositeOperation = 'lighter';
+            for (let i = 0; i < 3; i++) {
+                const cx = width * (0.5 + 0.38 * Math.sin(t + i * 2.1)), cy = height * (0.5 + 0.3 * Math.cos(t * 0.8 + i * 1.7));
+                const hue = (260 + i * 50 + fi * 1.2) % 360;
+                const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+                g.addColorStop(0, `hsla(${hue},90%,50%,0.5)`); g.addColorStop(1, `hsla(${hue},90%,50%,0)`);
+                ctx.fillStyle = g; ctx.fillRect(0, 0, width, height);
+            }
+            ctx.restore();
+            const c = cols('#ffffff', '#ffe08a');
+            ctx.save();
+            ctx.translate(0, (1 - easeOutExpo(inP)) * 25 - outP * 18);
+            drawLine(text, { size: 40, alpha: inP * (1 - outP), dt: c.t, da: c.a, shadow: 28, shadowColor: `hsl(${(300 + fi * 1.2) % 360},100%,65%)` });
+            ctx.restore();
+        }
+
+        // ---------- D: Terminal Type ----------
+        function drawTerminal(progress, text, fi) {
+            solid('#020a04');
+            ctx.fillStyle = 'rgba(0,255,90,0.05)';
+            for (let y = (fi % 3); y < height; y += 3) ctx.fillRect(0, y, width, 1);
+            const typeP = clamp01(progress / 0.5), eraseP = clamp01((progress - 0.85) / 0.15);
+            const k = Math.floor(text.length * clamp01(typeP - eraseP));
+            const c = cols('#39ff7a', '#ffb000');
+            const blink = Math.floor(fi / 6) % 2 === 0;
+            drawLine('> ' + text.slice(0, k), { size: 30, font: '"Courier New", monospace', left: width * 0.08, dt: c.t, da: c.a, shadow: 14, shadowColor: c.t, cursor: blink });
+            if (Math.random() < 0.06) { ctx.fillStyle = 'rgba(57,255,122,0.12)'; ctx.fillRect(0, Math.random() * height, width, 6); }
+        }
+
+        // ---------- E: Slice Reveal ----------
+        function drawSlice(progress, text, fi) {
+            const g = ctx.createLinearGradient(0, 0, width, height);
+            g.addColorStop(0, '#12042a'); g.addColorStop(1, '#3a0d5e');
+            ctx.save(); ctx.globalAlpha = backgroundImage ? 0.6 : 1; ctx.fillStyle = g; ctx.fillRect(0, 0, width, height); ctx.restore();
+            const c = cols('#ffffff', '#ffe14d');
+            const N = 5, h = height / N;
+            for (let k = 0; k < N; k++) {
+                const st = k * 0.04;
+                const inP = clamp01((progress - st) / 0.2), outP = clamp01((progress - 0.78 - st) / 0.18);
+                const dir = k % 2 ? 1 : -1;
+                const dx = dir * (1 - easeOutExpo(inP)) * width * 0.9 - dir * easeInExpo(outP) * width * 0.9;
+                if (inP <= 0) continue;
+                ctx.save();
+                ctx.beginPath(); ctx.rect(0, k * h, width, h + 1); ctx.clip();
+                ctx.translate(dx, 0);
+                drawLine(text, { size: 52, dt: c.t, da: c.a, shadow: 8 });
+                ctx.restore();
+            }
+            ctx.strokeStyle = 'rgba(255,225,77,0.35)'; ctx.lineWidth = 1;
+            const ly = height * 0.12; ctx.beginPath(); ctx.moveTo(0, ly); ctx.lineTo(width * clamp01(progress / 0.3), ly); ctx.stroke();
+        }
+
+        // --- ГЛАВНЫЙ РЕНДЕР ---
+        function drawFrame(frameIndex) {
+            // Очистка
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(0, 0, width, height);
+
+            let globalProgress = frameIndex / totalFrames; // 0.0 -> 1.0 на всю анимацию
+
+            // ==========================================
+            // ДИНАМИЧЕСКИЙ ФОН (Ken Burns + Цветокоррекция)
+            // ==========================================
+            if (backgroundImage) {
+                ctx.save();
+                
+                // 1. Эффект Кена Бернса (медленный зум и смещение)
+                // В начале анимации картинка меньше, к концу - больше
+                let bgScale = 1.0 + (globalProgress * 0.15); 
+                let bgPanX = Math.sin(globalProgress * Math.PI) * 20; // Легкое покачивание по X
+                let bgPanY = Math.cos(globalProgress * Math.PI) * 10; // Легкое покачивание по Y
+                
+                ctx.translate(width / 2 + bgPanX, height / 2 + bgPanY);
+                ctx.scale(bgScale, bgScale);
+                ctx.translate(-width / 2, -height / 2);
+                
+                // Рисуем фон
+                ctx.globalAlpha = 0.45; // Делаем его темнее
+                ctx.drawImage(backgroundImage, 0, 0, width, height);
+                
+                // 2. Динамическая цветокоррекция (Overlay)
+                // Добавляем цветной оттенок, который меняется в зависимости от прогресса
+                let hueShift = (globalProgress * 360) % 360;
+                ctx.globalAlpha = 0.15;
+                ctx.fillStyle = `hsl(${hueShift}, 80%, 50%)`;
+                ctx.fillRect(0, 0, width, height);
+                
+                ctx.restore();
+            }
+
+            // Логика текущего текста
+            let textIndex = Math.floor(frameIndex / framesPerText);
+            if (textIndex >= textsArray.length) textIndex = 0; 
+            
+            let frameInBlock = frameIndex % framesPerText;
+            let progress = frameInBlock / framesPerText; 
+            const currentText = textsArray[textIndex];
+
+            // =========================================================================
+            // 1. RGB GLITCH (Cyber)
+            // =========================================================================
+            const legacy = ['rgb_glitch', 'cinematic', 'neon', 'minimal', 'action'].includes(currentTemplate);
+            if (legacy) { ctx.save(); ctx.translate(width / 2, height / 2 + S.offY); ctx.scale(S.sizeMul, S.sizeMul); ctx.translate(-width / 2, -height / 2); }
+
+            if (currentTemplate === 'tile_cyan') drawTile(true, progress, currentText, frameIndex);
+            else if (currentTemplate === 'tile_fire') drawTile(false, progress, currentText, frameIndex);
+            else if (currentTemplate === 'aurora') drawAurora(progress, currentText, frameIndex);
+            else if (currentTemplate === 'terminal') drawTerminal(progress, currentText, frameIndex);
+            else if (currentTemplate === 'slice') drawSlice(progress, currentText, frameIndex);
+            else if (currentTemplate === 'rgb_glitch') {
+                ctx.save();
+                ctx.translate(width / 2, height / 2);
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.font = '900 55px "Arial Black", sans-serif'; 
+
+                let alpha = 1, glitchX = 0, scale = 1;
+
+                // Слово 1: Мягко
+                if (textIndex === 0) {
+                    if (progress < 0.2) { alpha = progress/0.2; glitchX = (1-progress/0.2)*20; }
+                    else if (progress > 0.8) { alpha = 1-(progress-0.8)/0.2; }
+                } 
+                // Слово 2: Резко
+                else if (textIndex === 1) {
+                    if (progress < 0.15) { let p=progress/0.15; alpha=p; scale=1.5-0.5*p; glitchX=(1-p)*40; }
+                    else if (progress > 0.8) { alpha = 1-(progress-0.8)/0.2; glitchX = (progress-0.8)*30; }
+                    else { glitchX = (Math.random()-0.5)*8; }
+                } 
+                // Слово 3: Взрыв
+                else {
+                    if (progress < 0.2) { let p=progress/0.2; alpha=p; scale=0.5+0.5*easeOutExpo(p); }
+                    else if (progress > 0.8) { alpha = 1-(progress-0.8)/0.2; }
+                }
+
+                ctx.globalAlpha = alpha;
+                ctx.scale(scale, scale);
+                ctx.translate(glitchX, 0);
+
+                let isAcc = isAccent(currentText);
+                let cR = '#ff0033', cC = '#00ffff';
+
+                if (textIndex === 2) {
+                    ctx.fillStyle = isAcc ? cR : '#fff';
+                    ctx.shadowColor = isAcc ? cR : '#fff'; ctx.shadowBlur = 15;
+                    ctx.fillText(currentText, 0, 0);
+                } else {
+                    ctx.fillStyle = cR; ctx.fillText(currentText, -8, 0);
+                    ctx.fillStyle = cC; ctx.fillText(currentText, 8, 0);
+                    ctx.fillStyle = isAcc ? cR : '#fff';
+                    ctx.shadowColor = isAcc ? cR : '#fff'; ctx.shadowBlur = 10;
+                    ctx.fillText(currentText, 0, 0);
+                }
+                ctx.restore();
+            }
+
+            // =========================================================================
+            // 2. CINEMATIC EPIC (Movie)
+            // =========================================================================
+            else if (currentTemplate === 'cinematic') {
+                // Полосы
+                ctx.fillStyle = '#000'; ctx.fillRect(0, 0, width, 20); ctx.fillRect(0, height-20, width, 20);
+                
+                ctx.save();
+                ctx.translate(width / 2, height / 2);
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.font = '900 45px "Times New Roman", serif';
+
+                let alpha = 1, scale = 1, blur = 0, spacing = 0;
+
+                // Слово 1: Трекинг
+                if (textIndex === 0) {
+                    if (progress < 0.4) { let p=progress/0.4; alpha=p; spacing=20*(1-p); }
+                    else { alpha = 1-(progress-0.4)/0.6; }
+                }
+                // Слово 2: 3D наезд
+                else if (textIndex === 1) {
+                    if (progress < 0.25) { let p=progress/0.25; scale=1+2*(1-easeOutExpo(p)); alpha=p; blur=15*(1-p); }
+                    else if (progress > 0.8) { alpha = 1-(progress-0.8)/0.2; blur = (progress-0.8)*10; }
+                }
+                // Слово 3: Растворение
+                else {
+                    if (progress < 0.15) { alpha = progress/0.15; }
+                    else if (progress > 0.7) { let p=(progress-0.7)/0.3; alpha=1-p; scale=1-p*0.1; }
+                }
+
+                ctx.globalAlpha = alpha;
+                ctx.scale(scale, scale);
+                ctx.filter = `blur(${blur}px)`;
+
+                let isAcc = isAccent(currentText);
+                ctx.fillStyle = isAcc ? '#ffaa00' : '#fff';
+                ctx.shadowColor = '#000'; ctx.shadowBlur = 10;
+                
+                // Отрисовка с интервалом
+                let totalWidth = ctx.measureText(currentText).width + (spacing * (currentText.length - 1));
+                let startX = -totalWidth / 2;
+                for(let i=0; i<currentText.length; i++) {
+                    let char = currentText[i];
+                    ctx.fillText(char, startX + ctx.measureText(char).width/2, 0);
+                    startX += ctx.measureText(char).width + spacing;
+                }
+                ctx.filter = 'none';
+                ctx.restore();
+            }
+
+            // =========================================================================
+            // 3. NEON SYNTH (Retro)
+            // =========================================================================
+            else if (currentTemplate === 'neon') {
+                // Сетка
+                ctx.strokeStyle = 'rgba(255, 0, 128, 0.1)'; ctx.lineWidth = 1;
+                let offset = (frameIndex * 2) % 40;
+                for(let i=0; i<width; i+=40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke(); }
+                for(let i=0; i<height; i+=40) { ctx.beginPath(); ctx.moveTo(0, i+offset); ctx.lineTo(width, i+offset); ctx.stroke(); }
+
+                ctx.save();
+                ctx.translate(width / 2, height / 2);
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.font = '900 50px "Arial Black", sans-serif';
+
+                let alpha = 1, yOff = 0, scale = 1;
+
+                // Слово 1: Снизу
+                if (textIndex === 0) {
+                    if (progress < 0.3) { let p=progress/0.3; yOff=(1-easeOutExpo(p))*80; alpha=p; }
+                    else if (progress > 0.8) { let p=(progress-0.8)/0.2; yOff=-easeInExpo(p)*80; alpha=1-p; }
+                }
+                // Слово 2: Глитч сборка
+                else if (textIndex === 1) {
+                    if (progress < 0.3) { let p=progress/0.3; alpha=p; scale=1.3-0.3*p; if(Math.random()>0.5) yOff=(Math.random()-0.5)*15; }
+                    else if (progress > 0.8) { alpha = 1-(progress-0.8)/0.2; }
+                }
+                // Слово 3: Взрыв
+                else {
+                    if (progress < 0.2) { let p=progress/0.2; scale=easeOutBack(p); alpha=p; }
+                    else if (progress > 0.8) { alpha = 1-(progress-0.8)/0.2; }
+                }
+
+                ctx.globalAlpha = alpha;
+                ctx.translate(0, yOff); ctx.scale(scale, scale);
+
+                let color = isAccent(currentText) ? '#ff007f' : '#00f0ff';
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 30; ctx.fillStyle = color; ctx.fillText(currentText, 0, 0);
+                ctx.shadowBlur = 10; ctx.fillStyle = '#fff'; ctx.fillText(currentText, 0, 0);
+                ctx.restore();
+            }
+
+            // =========================================================================
+            // 4. MINIMAL TYPE (Luxury)
+            // =========================================================================
+            else if (currentTemplate === 'minimal') {
+                ctx.save();
+                ctx.translate(width / 2, height / 2);
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.font = '300 45px "Segoe UI", sans-serif';
+
+                let alpha = 1, yOff = 0, lineW = 0;
+
+                // Слово 1: Выезд
+                if (textIndex === 0) {
+                    if (progress < 0.3) { let p=progress/0.3; yOff=30*(1-easeOutExpo(p)); alpha=p; lineW=easeOutExpo(p)*100; }
+                    else if (progress > 0.8) { alpha = 1-(progress-0.8)/0.2; lineW=1-(progress-0.8)/0.2; }
+                }
+                // Слово 2: Появление линий
+                else if (textIndex === 1) {
+                    if (progress < 0.2) { alpha = progress/0.2; }
+                    else if (progress > 0.8) { alpha = 1-(progress-0.8)/0.2; }
+                    lineW = Math.sin(progress * Math.PI) * 100; // Линия выезжает и уезжает
+                }
+                // Слово 3: Плавный подъем
+                else {
+                    if (progress < 0.2) { let p=progress/0.2; alpha=p; yOff=20*(1-p); }
+                    else if (progress > 0.8) { let p=(progress-0.8)/0.2; alpha=1-p; yOff=-20*p; }
+                    lineW = 100;
+                }
+
+                ctx.globalAlpha = alpha;
+                
+                // Декоративные линии
+                if (lineW > 0) {
+                    ctx.strokeStyle = isAccent(currentText) ? '#00ccff' : '#555';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(-lineW - 20, 0); ctx.lineTo(-20, 0); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(lineW + 20, 0); ctx.stroke();
+                }
+
+                ctx.translate(0, yOff);
+                ctx.fillStyle = isAccent(currentText) ? '#00ccff' : '#fff';
+                ctx.fillText(currentText, 0, 0);
+                ctx.restore();
+            }
+
+            // =========================================================================
+            // 5. ACTION TRAILER (Impact)
+            // =========================================================================
+            else if (currentTemplate === 'action') {
+                ctx.save();
+                ctx.translate(width / 2, height / 2);
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.font = '900 60px "Impact", sans-serif';
+
+                let alpha = 1, scale = 1, rotate = 0, blur = 0;
+
+                // Слово 1: Влет сбоку
+                if (textIndex === 0) {
+                    if (progress < 0.2) { let p=progress/0.2; alpha=p; rotate=(1-easeOutExpo(p))*0.3; scale=1.5-0.5*p; blur=(1-p)*10; }
+                    else if (progress > 0.8) { alpha = 1-(progress-0.8)/0.2; }
+                }
+                // Слово 2: Ударная волна
+                else if (textIndex === 1) {
+                    if (progress < 0.1) { let p=progress/0.1; scale=2-1*p; alpha=p; blur=(1-p)*20; }
+                    else if (progress > 0.8) { alpha = 1-(progress-0.8)/0.2; scale=1-(progress-0.8)*0.5; }
+                    else { scale = 1 + Math.sin(progress * Math.PI * 10) * 0.05; }
+                }
+                // Слово 3: Разлет
+                else {
+                    if (progress < 0.2) { let p=progress/0.2; alpha=p; scale=easeOutBack(p); }
+                    else if (progress > 0.6) { let p=(progress-0.6)/0.4; alpha=1-p; scale=1+p*2; }
+                }
+
+                // Ударная волна (только для 2 слова)
+                if (textIndex === 1 && progress > 0.1 && progress < 0.4) {
+                    let p = (progress-0.1)/0.3;
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${1-p})`;
+                    ctx.lineWidth = 10 * (1-p);
+                    ctx.beginPath(); ctx.arc(0, 0, p * 400, 0, Math.PI*2); ctx.stroke();
+                }
+
+                ctx.globalAlpha = alpha;
+                ctx.rotate(rotate); ctx.scale(scale, scale);
+                ctx.filter = `blur(${blur}px)`;
+
+                ctx.fillStyle = isAccent(currentText) ? '#ff3300' : '#fff';
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 6;
+                ctx.strokeText(currentText, 0, 0);
+                ctx.fillText(currentText, 0, 0);
+                
+                ctx.filter = 'none';
+                ctx.restore();
+            }
+
+            // --- ПОСТ-ОБРАБОТКА ---
+            if (legacy) ctx.restore();
+            if (S.vignette) {
+                let grad = ctx.createRadialGradient(width/2, height/2, height/3, width/2, height/2, width/0.8);
+                grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, 'rgba(0,0,0,0.7)');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, width, height);
+            }
+            if (S.grain > 0) {
+                const n = Math.floor(S.grain * 6);
+                for (let i = 0; i < n; i++) {
+                    ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.25)';
+                    ctx.fillRect(Math.random() * width, Math.random() * height, 1.5, 1.5);
+                }
+            }
+        }
+
+        let paused = false, timer = null;
+        function togglePause() { paused = !paused; document.getElementById('pauseBtn').innerText = paused ? '▶ Играть' : '⏸ Пауза'; }
+        function savePng() {
+            drawFrame(previewFrame);
+            const a = document.createElement('a'); a.href = canvas.toDataURL('image/png'); a.download = `frame_${currentTemplate}.png`; a.click();
+        }
+        function animatePreview() {
+            clearTimeout(timer);
+            if (isGenerating) return;
+            if (!paused) {
+                drawFrame(previewFrame);
+                previewFrame++;
+                if (previewFrame >= totalFrames) previewFrame = 0;
+            }
+            timer = setTimeout(() => { requestAnimationFrame(animatePreview); }, frameDelay);
+        }
+        document.querySelectorAll('.ctl').forEach(el => el.addEventListener('input', updateTemplatePreview));
+        document.getElementById('templateSelect').addEventListener('change', updateTemplatePreview);
+
+        updateSpeedLabel();
+        animatePreview();
+
+        async function startGeneration() {
+            if (isGenerating) return;
+            if (!window.GIFEncoder) { document.getElementById('statusText').innerText = "Загрузка модулей..."; return; }
+
+            isGenerating = true;
+            const btn = document.getElementById('downloadBtn');
+            const status = document.getElementById('statusText');
+            btn.innerText = "РЕНДЕРИНГ..."; btn.disabled = true;
+            status.innerText = "Обработка...";
+
+            try {
+                const gif = window.GIFEncoder();
+                for (let i = 0; i < totalFrames; i++) {
+                    drawFrame(i);
+                    const imageData = ctx.getImageData(0, 0, width, height);
+                    
+                    const palette = window.quantize(imageData.data, 256, { format: 'rgb565' }); 
+                    const index = window.applyPalette(imageData.data, palette, { format: 'rgb565' });
+                    
+                    gif.writeFrame(index, width, height, { palette, delay: frameDelay, repeat: S.loop ? 0 : -1 });
+                    if (i % 6 === 0) { status.innerText = `Кадр ${i + 1}/${totalFrames}`; await new Promise(r => setTimeout(r)); }
+                }
+                gif.finish();
+                const buffer = gif.bytes();
+                const blob = new Blob([buffer], { type: 'image/gif' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url; a.download = `pro_${currentTemplate}_gif.gif`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                status.innerText = "ГОТОВО.";
+            } catch (error) {
+                console.error('Ошибка:', error); status.innerText = "Ошибка: " + error.message;
+            } finally {
+                btn.innerText = "Рендерить в GIF"; btn.disabled = false; isGenerating = false; animatePreview();
+            }
+        }
+    </script>
+</body>
+</html>
