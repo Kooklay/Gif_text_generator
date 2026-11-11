@@ -57,6 +57,10 @@
                     <option value="aurora">C. Aurora Glow (новый)</option>
                     <option value="terminal">D. Terminal Type (новый)</option>
                     <option value="slice">E. Slice Reveal (новый)</option>
+                    <option value="comic">F. Comic Pop (новый)</option>
+                    <option value="vhs">G. Retro VHS (новый)</option>
+                    <option value="gold">H. Gold Luxe (новый)</option>
+                    <option value="wave">I. Rainbow Wave (новый)</option>
                     <option value="rgb_glitch">1. RGB Glitch (Cyber)</option>
                     <option value="cinematic">2. Cinematic Epic (Movie)</option>
                     <option value="neon">3. Neon Synth (Retro)</option>
@@ -143,6 +147,15 @@
                 </div>
             </div>
 
+            <div class="row2">
+                <div class="group"><label>Регистр</label>
+                    <select id="caseSel" class="ctl"><option value="as">Как введено</option><option value="up">ВЕРХНИЙ</option><option value="low">нижний</option></select></div>
+                <div class="group"><label>Яркость фона-картинки</label><input type="range" id="bgAlpha" class="ctl" min="5" max="100" value="45"></div>
+            </div>
+            <div class="row2">
+                <button class="btn2" onclick="randomStyle()">🎲 Случайный стиль</button>
+                <button class="btn2" onclick="resetAll()">Сброс</button>
+            </div>
             <button class="btn" id="downloadBtn" onclick="startGeneration()">Рендерить в GIF</button>
             <div class="status" id="statusText"></div>
         </div>
@@ -206,7 +219,7 @@
             currentTemplate = document.getElementById('templateSelect').value;
             accentWord = document.getElementById('accentWord').value.trim();
             let rawText = document.getElementById('textInput').value;
-            textsArray = rawText.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+            textsArray = rawText.split('\n').map(t => t.trim()).filter(t => t.length > 0).map(t => S.case === 'up' ? t.toUpperCase() : S.case === 'low' ? t.toLowerCase() : t);
             if (textsArray.length === 0) textsArray = ["ПУСТО"];
 
             let speedPercent = parseInt(document.getElementById('speedSlider').value);
@@ -220,6 +233,7 @@
 
             totalFrames = textsArray.length * framesPerText;
             previewFrame = 0;
+            saveSettings();
         }
 
         function isAccent(word) {
@@ -231,12 +245,12 @@
         }
 
         // ================= ОБЩИЕ НАСТРОЙКИ =================
-        let S = { font: '"Arial Black", sans-serif', sizeMul: 1, spacing: 3, offY: 0, grain: 0, vignette: false, glow: true, scramble: true, custom: false, text: '#ffffff', accent: '#ff4a14', loop: true };
+        let S = { font: '"Arial Black", sans-serif', sizeMul: 1, spacing: 3, offY: 0, grain: 0, vignette: false, glow: true, scramble: true, custom: false, text: '#ffffff', accent: '#ff4a14', loop: true, bgAlpha: 0.45, case: 'as' };
         function readS() {
             const g = id => document.getElementById(id);
             S.font = g('fontSel').value; S.sizeMul = g('sizeMul').value / 100; S.spacing = +g('spacing').value; S.offY = +g('offY').value;
             S.grain = +g('grain').value; S.vignette = g('vignette').checked; S.glow = g('glow').checked; S.scramble = g('scr').checked;
-            S.custom = g('custom').checked; S.text = g('colText').value; S.accent = g('colAcc').value; S.loop = g('loop').checked;
+            S.custom = g('custom').checked; S.text = g('colText').value; S.accent = g('colAcc').value; S.loop = g('loop').checked; S.bgAlpha = g('bgAlpha').value / 100; S.case = g('caseSel').value;
             g('sizeVal').innerText = g('sizeMul').value + '%';
             const [w, h] = g('sizeSel').value.split('x').map(Number);
             if (w !== width || h !== height) { canvas.width = w; canvas.height = h; width = w; height = h; canvas.style.width = w + 'px'; canvas.style.height = h + 'px'; }
@@ -285,10 +299,11 @@
                     c = SCR[Math.floor(Math.random() * SCR.length)]; a *= 0.45;
                 }
                 ctx.globalAlpha = a;
-                ctx.fillStyle = it.acc ? o.da : o.dt;
+                if (o.stroke) { ctx.shadowBlur = 0; ctx.lineJoin = 'round'; ctx.lineWidth = o.stroke.w; ctx.strokeStyle = o.stroke.c; ctx.strokeText(c, x, y + (o.charY ? o.charY(it.ci) : 0)); }
+                ctx.fillStyle = o.fillFn ? o.fillFn(it) : (it.acc ? o.da : o.dt);
                 ctx.shadowColor = o.shadowColor || (it.acc ? o.da : 'rgba(0,0,0,.8)');
                 ctx.shadowBlur = (o.shadow || 0) * (S.glow ? 1 : 0);
-                ctx.fillText(c, x, y);
+                ctx.fillText(c, x, y + (o.charY ? o.charY(it.ci) : 0));
                 x += it.cw + sp;
             }
             if (o.cursor) { ctx.globalAlpha = 1; ctx.shadowColor = o.dt; ctx.shadowBlur = S.glow ? 10 : 0; ctx.fillStyle = o.dt; ctx.fillRect(x + 2, y - size * 0.4, size * 0.5, size * 0.8); }
@@ -396,6 +411,76 @@
             const ly = height * 0.12; ctx.beginPath(); ctx.moveTo(0, ly); ctx.lineTo(width * clamp01(progress / 0.3), ly); ctx.stroke();
         }
 
+        // ---------- F: Comic Pop ----------
+        function drawComic(progress, text, fi) {
+            const inP = clamp01(progress / 0.18), outP = clamp01((progress - 0.82) / 0.18);
+            solid('#ffd400');
+            ctx.fillStyle = 'rgba(255,110,0,0.35)';
+            for (let gy = 0; gy < height + 16; gy += 16) for (let gx = (gy / 16 % 2) * 8; gx < width + 16; gx += 16) {
+                ctx.beginPath(); ctx.arc(gx, gy, 3 + 2 * Math.sin(fi * 0.1 + gx * 0.04 + gy * 0.04), 0, 7); ctx.fill();
+            }
+            const c = cols('#ffffff', '#ff2a2a'), sc = easeOutBack(inP) * (1 - outP);
+            if (sc < 0.02) return;
+            ctx.save();
+            ctx.translate(width / 2, height / 2); ctx.rotate(-0.05 + (1 - easeOutBack(inP)) * 0.3); ctx.scale(sc, sc); ctx.translate(-width / 2, -height / 2);
+            drawLine(text, { size: 48, font: 'Impact, "Arial Black", sans-serif', dt: c.t, da: c.a, stroke: { c: '#111', w: 9 }, shadow: 0 });
+            ctx.restore();
+        }
+
+        // ---------- G: Retro VHS ----------
+        function drawVHS(progress, text, fi) {
+            const inP = clamp01(progress / 0.15), outP = clamp01((progress - 0.85) / 0.15), a = inP * (1 - outP);
+            solid('#0a0a12');
+            const c = cols('#ffffff', '#ffe14d');
+            ctx.save();
+            ctx.translate(Math.random() < 0.12 ? (Math.random() - 0.5) * 14 : 0, 0);
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.save(); ctx.translate(-3, 0); drawLine(text, { size: 40, alpha: a * 0.8, dt: '#ff0040', da: '#ff0040' }); ctx.restore();
+            ctx.save(); ctx.translate(3, 0); drawLine(text, { size: 40, alpha: a * 0.8, dt: '#00e5ff', da: '#00e5ff' }); ctx.restore();
+            ctx.globalCompositeOperation = 'source-over';
+            drawLine(text, { size: 40, alpha: a, dt: c.t, da: c.a, shadow: 6 });
+            ctx.restore();
+            for (let i = 0; i < 2; i++) { ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(0, Math.random() * height, width, 2 + Math.random() * 6); }
+            ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            for (let y = 0; y < height; y += 4) ctx.fillRect(0, y, width, 1);
+            ctx.fillStyle = '#ddd'; ctx.font = '700 13px "Courier New", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+            ctx.fillText('▶ PLAY', 16, 14);
+            ctx.textAlign = 'right'; ctx.fillText('00:0' + Math.floor(fi / 30 % 10) + ':' + String(fi % 30).padStart(2, '0'), width - 16, 14);
+        }
+
+        // ---------- H: Gold Luxe ----------
+        function drawGold(progress, text, fi) {
+            const inP = clamp01(progress / 0.25), outP = clamp01((progress - 0.8) / 0.2), a = inP * (1 - outP);
+            solid('#050505');
+            ctx.strokeStyle = `rgba(212,175,55,${a * 0.8})`; ctx.lineWidth = 1;
+            const m = 16, L = (width / 2 - m) * easeOutExpo(inP);
+            [m, height - m].forEach(y => { ctx.beginPath(); ctx.moveTo(width / 2 - L, y); ctx.lineTo(width / 2 + L, y); ctx.stroke(); });
+            const sh = ((fi * 0.015) % 1.6) - 0.3;
+            const g = ctx.createLinearGradient(0, 0, width, 0);
+            const st = [[0, '#8a6a1f'], [Math.max(0, sh - 0.12), '#c9a13b'], [clamp01(sh), '#fff6d0'], [clamp01(sh + 0.12), '#c9a13b'], [1, '#8a6a1f']];
+            st.sort((p, q) => p[0] - q[0]).forEach(([p, col]) => g.addColorStop(clamp01(p), col));
+            const c = cols('#ffffff', '#ffffff');
+            ctx.save();
+            ctx.translate(width / 2, height / 2); const k = 1.06 - 0.06 * easeOutExpo(inP); ctx.scale(k, k); ctx.translate(-width / 2, -height / 2);
+            drawLine(text, { size: 40, font: '"Times New Roman", serif', alpha: a, dt: c.t, da: c.a, shadow: 10, shadowColor: 'rgba(212,175,55,0.6)', fillFn: it => it.acc ? c.a : (S.custom ? c.t : g) });
+            ctx.restore();
+        }
+
+        // ---------- I: Rainbow Wave ----------
+        function drawWave(progress, text, fi) {
+            const inP = clamp01(progress / 0.25), outP = clamp01((progress - 0.8) / 0.2);
+            const bg = ctx.createLinearGradient(0, 0, 0, height);
+            bg.addColorStop(0, '#0a1030'); bg.addColorStop(1, '#1a0b3a');
+            ctx.save(); ctx.globalAlpha = backgroundImage ? 0.6 : 1; ctx.fillStyle = bg; ctx.fillRect(0, 0, width, height); ctx.restore();
+            const c = cols('#ffffff', '#ffffff');
+            ctx.save();
+            ctx.translate(width / 2, height / 2); const k = 1 + outP * 0.15; ctx.scale(k, k); ctx.translate(-width / 2, -height / 2);
+            drawLine(text, { size: 44, reveal: clamp01(inP * 1.4), alpha: 1 - outP, dt: c.t, da: c.a, shadow: 14, shadowColor: 'rgba(0,0,0,0.6)',
+                charY: ci => Math.sin(fi * 0.25 + ci * 0.6) * 9 * inP,
+                fillFn: it => it.acc ? c.a : (S.custom ? c.t : `hsl(${(it.ci * 25 + fi * 4) % 360},90%,62%)`) });
+            ctx.restore();
+        }
+
         // --- ГЛАВНЫЙ РЕНДЕР ---
         function drawFrame(frameIndex) {
             // Очистка
@@ -421,7 +506,7 @@
                 ctx.translate(-width / 2, -height / 2);
                 
                 // Рисуем фон
-                ctx.globalAlpha = 0.45; // Делаем его темнее
+                ctx.globalAlpha = S.bgAlpha;
                 ctx.drawImage(backgroundImage, 0, 0, width, height);
                 
                 // 2. Динамическая цветокоррекция (Overlay)
@@ -453,6 +538,10 @@
             else if (currentTemplate === 'aurora') drawAurora(progress, currentText, frameIndex);
             else if (currentTemplate === 'terminal') drawTerminal(progress, currentText, frameIndex);
             else if (currentTemplate === 'slice') drawSlice(progress, currentText, frameIndex);
+            else if (currentTemplate === 'comic') drawComic(progress, currentText, frameIndex);
+            else if (currentTemplate === 'vhs') drawVHS(progress, currentText, frameIndex);
+            else if (currentTemplate === 'gold') drawGold(progress, currentText, frameIndex);
+            else if (currentTemplate === 'wave') drawWave(progress, currentText, frameIndex);
             else if (currentTemplate === 'rgb_glitch') {
                 ctx.save();
                 ctx.translate(width / 2, height / 2);
@@ -721,6 +810,33 @@
         document.querySelectorAll('.ctl').forEach(el => el.addEventListener('input', updateTemplatePreview));
         document.getElementById('templateSelect').addEventListener('change', updateTemplatePreview);
 
+        const IDS = ['templateSelect', 'textInput', 'accentWord', 'speedSlider', 'sizeSel', 'fontSel', 'sizeMul', 'spacing', 'offY', 'grain', 'colText', 'colAcc', 'custom', 'scr', 'glow', 'vignette', 'loop', 'caseSel', 'bgAlpha'];
+        function saveSettings() {
+            try { const o = {}; IDS.forEach(id => { const e = document.getElementById(id); o[id] = e.type === 'checkbox' ? e.checked : e.value; }); localStorage.setItem('proStudio', JSON.stringify(o)); } catch (e) {}
+        }
+        function loadSettings() {
+            try {
+                const o = JSON.parse(localStorage.getItem('proStudio') || 'null'); if (!o) return;
+                IDS.forEach(id => { const e = document.getElementById(id); if (e && id in o) { if (e.type === 'checkbox') e.checked = o[id]; else e.value = o[id]; } });
+            } catch (e) {}
+        }
+        function resetAll() { try { localStorage.removeItem('proStudio'); } catch (e) {} location.reload(); }
+        function hslToHex(h, sat, l) {
+            l /= 100; const a = sat * Math.min(l, 1 - l) / 100;
+            const f = n => { const k = (n + h / 30) % 12; return Math.round(255 * (l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1))).toString(16).padStart(2, '0'); };
+            return '#' + f(0) + f(8) + f(4);
+        }
+        function randomStyle() {
+            const g = id => document.getElementById(id);
+            g('templateSelect').selectedIndex = Math.floor(Math.random() * g('templateSelect').options.length);
+            g('fontSel').selectedIndex = Math.floor(Math.random() * g('fontSel').options.length);
+            g('custom').checked = true; g('colText').value = '#ffffff'; g('colAcc').value = hslToHex(Math.floor(Math.random() * 360), 100, 60);
+            updateTemplatePreview();
+        }
+        document.addEventListener('keydown', e => {
+            if (e.code === 'Space' && !['TEXTAREA', 'INPUT', 'SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); togglePause(); }
+        });
+        loadSettings();
         updateSpeedLabel();
         animatePreview();
 
